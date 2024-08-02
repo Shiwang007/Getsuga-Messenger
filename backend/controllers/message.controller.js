@@ -1,6 +1,7 @@
 const { response } = require("express");
 const ConversationModel = require("../models/conversation.model");
 const MessageModel = require("../models/message.model");
+const { getReceiverSocketId, io } = require("../socket/socket");
 
 exports.sendMessage = async (req, res) => {
   try {
@@ -28,9 +29,14 @@ exports.sendMessage = async (req, res) => {
       conversation.messages.push(newMessage._id);
     }
 
-    //Socket IO functinality will go here
-
     await Promise.all([conversation.save(), newMessage.save()]);
+
+    // socket functinality
+    const receiverSocketId = getReceiverSocketId(recieverId);
+    if (receiverSocketId) {
+      // io.to() used to send messages to a specific client
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
 
     res.status(201).json({
       status: "success",
@@ -55,9 +61,12 @@ exports.getMessages = async (req, res) => {
     }).populate("messages");
 
     if (!conversation) {
-         res.status(200).json([]);
+      return res.status(200).json({
+        status: "success",
+        conversation: [],
+      });
     }
-      
+
     res.status(200).json({
       status: "success",
       conversation: conversation.messages,
