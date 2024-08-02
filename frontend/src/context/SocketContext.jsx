@@ -16,7 +16,7 @@ export const SocketContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (authUser?.user) {
-      const socket = io("http://localhost:8000", {
+      const socket = io("https://getsuga-messenger.onrender.com", {
         query: {
           userId: authUser.user._id,
         },
